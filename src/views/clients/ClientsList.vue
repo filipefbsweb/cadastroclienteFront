@@ -1,5 +1,12 @@
 <template>
 	<q-page-container>
+		<modal-delete-client
+			:showModal="varShowModal"
+			:nameClient="nameClientModal"
+			@closeModal="varShowModal = false"
+			@confirmDelete="serviceDeleteClient($event)"
+		/>
+
 		<div class="row q-mb-lg q-mt-lg text-center">
 			<div class="col text-h4">Lista de Cliente</div>
 		</div>
@@ -14,11 +21,12 @@
 		</div>
 
 		<q-table
-			v-if="clientsList != '' "
+			v-if="clientsList != ''"
 			:rows="clientsList"
 			row-key="code"
 			:columns="columns"
 			:pagination.sync="pagination"
+			@row-dblclick="editClient"
 		>
 			<template v-slot:body-cell-acoes="props">
 				<q-td :props="props">
@@ -26,22 +34,9 @@
 						flat
 						round
 						small
-						color="primary"
-						icon="edit"
-						@dblclick="
-							$router.push({ name: 'EditClient', params: { code: props.row.code } })
-						"
-						virtual-scroll
-						:virtual-scroll-item-size="20"
-						:virtual-scroll-sticky-size-start="20"
-					/>
-					<q-btn
-						flat
-						round
-						small
 						color="negative"
 						icon="delete"
-						@click="deleteClient(props.row.code)"
+						@click="deleteClient(props.row)"
 					/>
 				</q-td>
 			</template>
@@ -54,12 +49,17 @@
 </template>
 
 <script setup>
-import { defineComponent, ref, onMounted } from "vue";
+import { defineComponent, ref, onMounted, reactive } from "vue";
+import { useRouter } from "vue-router";
+import ModalDeleteClient from "@/components/modal/deleteClient.vue";
 import Clients from "@/services/clients.js";
 
+const router = useRouter();
 let clientsService = new Clients();
+let nameClientModal = reactive({});
+let varShowModal = ref(false);
 
-let clientsList = ref('');
+let clientsList = ref("");
 let columns = [
 	{ name: "name", required: true, label: "Nome", align: "left", field: "name" },
 	{
@@ -83,8 +83,9 @@ let columns = [
 		align: "left",
 		field: "state",
 	},
-	{ name: "acoes", required: true, label: "Ações", align: "left" },
+	{ name: "acoes", required: true, label: "Excluir", align: "left" },
 ];
+
 let pagination = {
 	rowsPerPage: 10,
 };
@@ -94,9 +95,19 @@ async function listClients() {
 	clientsList.value = res;
 }
 
-async function deleteClient(id) {
-	await clientsService.deleteClient(id);	
+async function serviceDeleteClient(id){
+	await clientsService.deleteClient(id);
+	varShowModal.value = false;
 	listClients();
+}
+
+function deleteClient(client) {
+	nameClientModal = client;
+	varShowModal.value = true;	
+}
+
+function editClient(evt, row) {
+	router.push({ name: "EditClient", params: { code: row.code } });
 }
 
 onMounted(() => {

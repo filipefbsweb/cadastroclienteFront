@@ -6,16 +6,18 @@ import {
 	reactive,
 	ref,
 	onMounted,
-	computed
+	computed,
 } from "vue";
 import Clients from "@/services/clients.js";
 import { useRoute, useRouter } from "vue-router";
 import Cep from "@/services/cep.js";
+import { listStates } from "@/utils/states.js";
 
 const router = useRouter();
 const route = useRoute();
 const serviceClients = new Clients();
 const functionCep = new Cep();
+const states = listStates;
 
 defineComponent({
 	name: "FormAddClient",
@@ -24,36 +26,6 @@ defineComponent({
 const props = defineProps({
 	edit: Boolean,
 });
-
-const states = [
-	{ uf: "AC", nome: "Acre" },
-	{ uf: "AL", nome: "Alagoas" },
-	{ uf: "AP", nome: "Amapá" },
-	{ uf: "AM", nome: "Amazonas" },
-	{ uf: "BA", nome: "Bahia" },
-	{ uf: "CE", nome: "Ceará" },
-	{ uf: "DF", nome: "Distrito Federal" },
-	{ uf: "ES", nome: "Espirito Santo" },
-	{ uf: "GO", nome: "Goiás" },
-	{ uf: "MA", nome: "Maranhão" },
-	{ uf: "MS", nome: "Mato Grosso do Sul" },
-	{ uf: "MT", nome: "Mato Grosso" },
-	{ uf: "MG", nome: "Minas Gerais" },
-	{ uf: "PA", nome: "Pará" },
-	{ uf: "PB", nome: "Paraíba" },
-	{ uf: "PR", nome: "Paraná" },
-	{ uf: "PE", nome: "Pernambuco" },
-	{ uf: "PI", nome: "Piauí" },
-	{ uf: "RJ", nome: "Rio de Janeiro" },
-	{ uf: "RN", nome: "Rio Grande do Norte" },
-	{ uf: "RS", nome: "Rio Grande do Sul" },
-	{ uf: "RO", nome: "Rondônia" },
-	{ uf: "RR", nome: "Roraima" },
-	{ uf: "SC", nome: "Santa Catarina" },
-	{ uf: "SP", nome: "São Paulo" },
-	{ uf: "SE", nome: "Sergipe" },
-	{ uf: "TO", nome: "Tocantins" },
-];
 
 let isEditing = ref(0);
 let attachment = ref(null);
@@ -75,7 +47,6 @@ watch(
 );
 
 async function searchCep() {
-	console.log(isEditing.value);
 	if (form.cep.length === 9 && isEditing.value === 0) {
 		let res = await functionCep.searchCep(form.cep);
 		form.address = res.logradouro;
@@ -100,9 +71,9 @@ function submitForm(e) {
 }
 
 async function saveForm(value) {
-	let edit = computed(() => props.edit)
-	edit.value && await serviceClients.updateClient(value, route.params.code);
-	!edit.value && await serviceClients.addClient(value);
+	let edit = computed(() => props.edit);
+	edit.value && (await serviceClients.updateClient(value, route.params.code));
+	!edit.value && (await serviceClients.addClient(value));
 	router.push({ name: "ListClients" });
 }
 
